@@ -10,11 +10,10 @@ import static maze.gen.street.Direction.*;
 
 public class Generator {
     private Map<Integer,Deque<Road>> conRoadsMap;
-    public double straightRoadProb = 0.9;
+    private Map<Integer, RoadFactory> factories;
     private CityMap cityMap;
     private int seed;
-    private Map<Integer, RoadFactory> factories;
-
+    public double straightRoadProb = 0.9;
     int smallestGridSize = 5;
     int smallestRoadWidth =1;
     int gridSizeMultiplier =6;
@@ -44,20 +43,12 @@ public class Generator {
         }
         for(int i=levels-1;i>=0;i--)
             fractalRoads((int)(smallestRoadWidth*(Math.pow(roadWidthMultiplier,i))),straightRoadProb);
-        //fractalRoads(4,straightRoadProb);
 
     }
     public CityMap getMap(){
         return cityMap;
     }
 
-    private boolean roadExists(Point b){
-        if(cityMap.getSquare(b.x-1,b.y)==1 &&cityMap.getSquare(b.x+1,b.y)==1)
-            return true;
-        if(cityMap.getSquare(b.x,b.y-1)==1 &&cityMap.getSquare(b.x,b.y+1)==1)
-            return true;
-        return false;
-    }
     private void fractalRoads(int roadWidth,double straightRoadProb) {
         while (!getConRoads(roadWidth).isEmpty()) {
             Road r = getConRoads(roadWidth).pop();
@@ -77,6 +68,7 @@ public class Generator {
                         storeRoad(newRoad);
                 }
             }
+            //see if u can remove
             if (!connected) {
                 Direction dir = random.nextDouble() < straightRoadProb ? r.getDir() : openDirs[random.nextInt(openDirs.length)];
                 Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
