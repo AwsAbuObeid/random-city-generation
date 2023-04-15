@@ -6,7 +6,7 @@ import java.util.Random;
 
 public class Main {
     public static void main(String[] args) {
-        JFrame frame = new JFrame("My City");
+        JFrame frame = new JFrame("My City 1");
         int pixelSizeX = 1500;
         int pixelSizeY = 900;
         Random random = new Random();
