@@ -47,7 +47,37 @@ public class RoadFactory {
         System.arraycopy(directions,0,result,0,size);
         return result;
     }
+    
     private boolean isConnected(Point curr, Point next){
+        for (int x = Math.min(curr.x, next.x); x <= Math.max(curr.x, next.x); x++)
+        for (int y = Math.min(curr.y, next.y); y <= Math.max(curr.y, next.y); y++)
+        	if (cityMap.getSquare(x, y) != 1) 
+        		return false;
+        return true;
+    }
+    
+    private Point getNextPoint(Point start,Direction direction){
+        return new Point(start.x + direction.getVector()[0]*roadLength, start.y + direction.getVector()[1]*roadLength);
+    }
+    
+    private boolean is2Connected(Point curr, Point next){
+    	 int buffer = roadWidth/2 ;
+         int evenFix=roadWidth%2==0?1:0;
+         if (curr.y == next.y) {
+             for (int i = Math.min(curr.x, next.x) - buffer + evenFix; i <= Math.max(curr.x, next.x) + buffer; i++)
+                 for (int j = curr.y - buffer + evenFix; j <= curr.y + buffer; j++)
+                	 if(cityMap.getSquare(i,j)!=1) return false;
+         
+         }else
+             for (int i = Math.min(curr.y, next.y) - buffer + evenFix; i <= Math.max(curr.y, next.y) + buffer; i++)
+                 for (int j = curr.x - buffer + evenFix; j <= curr.x + buffer; j++)
+                	 if(cityMap.getSquare(i,j)!=1) return false;
+         return true;
+    }
+    private boolean is3Connected(Point curr, Point next){
+        return cityMap.getSquare((2*curr.x + next.x)/3,(2*curr.y + next.y)/3)==1;
+    }
+    private boolean is4Connected(Point curr, Point next){
         int evenFix1=roadWidth%2==0?1:0;
         int startX = (curr.x + next.x)/2 - roadWidth / 2 +  evenFix1;
         int startY = (curr.y + next.y)/2 - roadWidth / 2 +  evenFix1;
@@ -59,11 +89,7 @@ public class RoadFactory {
                 if(cityMap.getSquare(x,y)!=1) return false;
         return true;
     }
-    private boolean is23Connected(Point curr, Point next){
-        return cityMap.getSquare((2*curr.x + next.x)/3,(2*curr.y + next.y)/3)==1;
-    }
-    private Point getNextPoint(Point start,Direction direction){
-        return new Point(start.x + direction.getVector()[0]*roadLength, start.y + direction.getVector()[1]*roadLength);
-    }
+
+
 
 }

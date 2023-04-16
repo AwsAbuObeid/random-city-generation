@@ -57,24 +57,16 @@ public class Generator {
             Direction[] openDirs = factories.get(roadWidth).getOpenDirections(r);
             Collections.shuffle(Arrays.asList(openDirs), random);
             boolean connected = openDirs.length != 3;
-            for (Direction dir : openDirs) {
+            for ( int i=0;i<openDirs.length;i++) {
                 double prob = straightRoadProb;
-                if (r.getDir() != dir) prob = (1 - straightRoadProb);
-                if (random.nextDouble() < prob) {
+                if (r.getDir() != openDirs[i]) prob = (1 - straightRoadProb);
+                if (random.nextDouble() < prob || (i==openDirs.length-1 && !connected)) {
                     if (!connected) connected = true;
-                    Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
+                    Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), openDirs[i]);
                     createSmallerRoads(newRoad.getEnd(), factories.get(roadWidth).getOpenDirections(newRoad), roadWidth /roadWidthMultiplier, random);
                     if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1)
                         storeRoad(newRoad);
                 }
-            }
-            //see if u can remove
-            if (!connected) {
-                Direction dir = random.nextDouble() < straightRoadProb ? r.getDir() : openDirs[random.nextInt(openDirs.length)];
-                Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
-                createSmallerRoads(newRoad.getEnd(), factories.get(roadWidth).getOpenDirections(newRoad), roadWidth/roadWidthMultiplier, random);
-                if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1)
-                    storeRoad(newRoad);
             }
         }
     }
