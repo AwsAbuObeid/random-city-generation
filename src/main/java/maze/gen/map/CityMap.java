@@ -3,20 +3,21 @@ package maze.gen.map;
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class CityMap {
     int chunkSize;
     HashMap<String,Chunk> chunks;
-    Set<Chunk> edgeChunks;
+    Map<Point,Chunk> edgeChunks;
     Point playerLoc;
     int renderDistance;
     public CityMap() {
         chunkSize =Chunk.getSize();
         chunks = new HashMap<>();
-        edgeChunks=new HashSet<>();
+        edgeChunks=new HashMap<>();
         playerLoc=new Point(0,0);
-        renderDistance=60;
+        renderDistance=20;
     }
 
     public void setSquare(int x, int y, int value){
@@ -56,10 +57,15 @@ public class CityMap {
         double dy = p.y-chunkLoc(playerLoc.y);
         return Math.sqrt(dx*dx + dy*dy)<=renderDistance;
     }
-    private int chunkLoc(int v){
+    public int chunkLoc(int v){
         return (int) Math.floor(v/(chunkSize +0.0));
     }
-    public Set<Chunk> getEdgeChunks(){
+    
+    public Point chunkLoc(Point p){
+        return new Point(chunkLoc(p.x),chunkLoc(p.y));
+    }
+    
+    public Map<Point,Chunk> getEdgeChunks(){
         return edgeChunks;
     }
 
@@ -70,4 +76,17 @@ public class CityMap {
     public void setPlayerLoc(Point playerLoc) {
         this.playerLoc = playerLoc;
     }
+    public Set<Point> playerRadiusChunkLocs(){
+    	Set<Point> points=new HashSet<>();
+    	double radius;
+        for (int angle = 0; angle < 360; angle++) {
+	         double radian = Math.toRadians(angle);
+	         int x = chunkLoc(playerLoc.x)+ (int) (renderDistance  * Math.cos(radian));
+	         int y = chunkLoc(playerLoc.y) + (int) (renderDistance * Math.sin(radian));
+	         points.add(new Point(x,y));
+        }
+    	return points;
+    }
+
+    
 }

@@ -82,8 +82,9 @@ public class Generator {
 
     }
     private void storeRoad(Road newRoad){
-        if (!cityMap.isPointLoaded(newRoad.getEnd())) {
-            cityMap.getEdgeChunks().add(cityMap.getPointChunk(newRoad.getEnd()));
+    	Point roadEnd =newRoad.getEnd();
+        if (!cityMap.isPointLoaded(roadEnd)) {
+            cityMap.getEdgeChunks().put(cityMap.chunkLoc(roadEnd),cityMap.getPointChunk(roadEnd));
             cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
         } else
             getConRoads(newRoad.getWidth()).push(newRoad);
@@ -99,13 +100,20 @@ public class Generator {
         Point loc=cityMap.getPlayerLoc();
         cityMap.setPlayerLoc(new Point(loc.x+movementX, loc.y+movementY));
         System.out.println(cityMap.getPlayerLoc());
-        Set<Chunk> edgeChunks=cityMap.getEdgeChunks();
-        for(Chunk chunk:edgeChunks){
-            if(cityMap.isChunkLoaded(chunk.getLoc()))
-                for(int width:roadWidths)
-                    getConRoads(width).addAll(chunk.getConPoints(width));
+        //TODO
+        //if movement is less than half a chunk then record it and dont load chunks
+        
+        Set<Point> radiusChunkPoints=cityMap.playerRadiusChunkLocs();
+        System.out.println("size "+radiusChunkPoints.size());
+        for(Point chunkLoc :radiusChunkPoints){
+        	if(!cityMap.isChunkLoaded(chunkLoc)) continue;
+        	Chunk chunk=cityMap.getEdgeChunks().get(chunkLoc);
+        	if(chunk==null) continue;
+            for(int width:roadWidths)
+            	getConRoads(width).addAll(chunk.getConPoints(width));
         }
         for(int width:roadWidths)
             fractalRoads(width,straightRoadProb);
     }
+    
 }
