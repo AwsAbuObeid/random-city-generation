@@ -7,17 +7,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class CityMap {
-    int chunkSize;
-    HashMap<String,Chunk> chunks;
-    Map<Point,Chunk> edgeChunks;
-    Point playerLoc;
-    int renderDistance;
+    private int chunkSize;
+    private HashMap<String,Chunk> chunks;
+    private Map<Point,Chunk> edgeChunks;
+    private Point playerLoc;
+    private int renderDistance;
     public CityMap() {
         chunkSize =Chunk.getSize();
         chunks = new HashMap<>();
         edgeChunks=new HashMap<>();
         playerLoc=new Point(0,0);
-        renderDistance=20;
+        renderDistance=90;
     }
 
     public void setSquare(int x, int y, int value){
@@ -78,14 +78,19 @@ public class CityMap {
     }
     public Set<Point> playerRadiusChunkLocs(){
     	Set<Point> points=new HashSet<>();
-    	double radius;
-        for (int angle = 0; angle < 360; angle++) {
+    	double edgeLength=2*Math.PI*renderDistance;
+    	double segmentSize=360/(edgeLength/(chunkSize/4));
+    	System.out.println(segmentSize);
+        for (int angle = 0; angle < 360; angle+=segmentSize) {
 	         double radian = Math.toRadians(angle);
 	         int x = chunkLoc(playerLoc.x)+ (int) (renderDistance  * Math.cos(radian));
 	         int y = chunkLoc(playerLoc.y) + (int) (renderDistance * Math.sin(radian));
 	         points.add(new Point(x,y));
         }
     	return points;
+    }
+    public int getChunkSize() {
+    	return chunkSize;
     }
 
     
