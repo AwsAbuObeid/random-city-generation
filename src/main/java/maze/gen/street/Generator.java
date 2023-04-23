@@ -10,13 +10,16 @@ import static maze.gen.street.Direction.*;
 
 public class Generator {
     private Map<Integer,Deque<Road>> conRoadsMap;
+
+    private Deque<Chunk> generationQueue;
     private Map<Integer, RoadFactory> factories;
     private CityMap cityMap;
     private int seed;
-    public double straightRoadProb = 0.9;
-    int smallestGridSize = 5;
+    public double straightRoadProb = 0.5;
+    public double curvedRoadProb =straightRoadProb/2;
+    int smallestGridSize = 6;
     int smallestRoadWidth =1;
-    int gridSizeMultiplier =6;
+    int gridSizeMultiplier =5;
     int roadWidthMultiplier=2;
     int levels=3;
     double smallerStreetScaleFactor =0.1;
@@ -27,14 +30,16 @@ public class Generator {
         factories=new HashMap<>();
         cityMap=new CityMap();
         conRoadsMap =new HashMap<>();
+        generationQueue=new ArrayDeque<>();
         roadWidths=new int[levels];
-
+        long startTime = System.currentTimeMillis(); // Record the start time
         for(int i=0;i<levels;i++){
             int width= (int) (smallestRoadWidth*(Math.pow(roadWidthMultiplier,i)));
             int length=(int) (smallestGridSize*(Math.pow(gridSizeMultiplier,i)));
             factories.put(width,new RoadFactory(length,width,cityMap));
             roadWidths[i]=width;
             if(i==levels-1){
+                Chunk.setSize(length);
                 getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),RIGHT));
                 getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),LEFT));
                 getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),UP));
@@ -43,6 +48,7 @@ public class Generator {
         }
         for(int i=levels-1;i>=0;i--)
             fractalRoads((int)(smallestRoadWidth*(Math.pow(roadWidthMultiplier,i))),straightRoadProb);
+        System.out.println("generation took " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds to run.");
 
     }
     public CityMap getMap(){
@@ -59,13 +65,21 @@ public class Generator {
             boolean connected = openDirs.length != 3;
             for ( int i=0;i<openDirs.length;i++) {
                 double prob = straightRoadProb;
-                if (r.getDir() != openDirs[i]) prob = (1 - straightRoadProb);
+                if (r.getDir() != openDirs[i]) prob = curvedRoadProb;
                 if (random.nextDouble() < prob || (i==openDirs.length-1 && !connected)) {
+                    Direction dir=openDirs[i];
+                    if((i==openDirs.length-1 && !connected)&& Arrays.asList(openDirs).contains(r.getDir()))
+                        dir=r.getDir();
                     if (!connected) connected = true;
-                    Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), openDirs[i]);
-                    createSmallerRoads(newRoad.getEnd(), factories.get(roadWidth).getOpenDirections(newRoad), roadWidth /roadWidthMultiplier, random);
-                    if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1)
+
+                    Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
+                    Direction[] directions =  factories.get(roadWidth).getOpenDirections(newRoad);
+                    createSmallerRoads(newRoad.getEnd(),directions, roadWidth /roadWidthMultiplier, random);
+                    //don't go through roads
+                    //if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1)
+                    //if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1 || factories.get(roadWidth).getOpenDirections(newRoad)[0] != newRoad.getDir())
                         storeRoad(newRoad);
+
                 }
             }
         }
@@ -104,7 +118,6 @@ public class Generator {
         //if movement is less than half a chunk then record it and dont load chunks
         
         Set<Point> radiusChunkPoints=cityMap.playerRadiusChunkLocs();
-        System.out.println("size "+radiusChunkPoints.size());
         for(Point chunkLoc :radiusChunkPoints){
         	if(!cityMap.isChunkLoaded(chunkLoc)) continue;
         	Chunk chunk=cityMap.getEdgeChunks().get(chunkLoc);

@@ -1,49 +1,51 @@
 package maze.gen.map;
 
+
 import java.awt.Point;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static maze.gen.map.Chunk.getChunkSize;
+
 public class CityMap {
-    private int chunkSize;
-    private HashMap<String,Chunk> chunks;
-    private Map<Point,Chunk> edgeChunks;
+    private final HashMap<Point,Chunk> chunks;
+    private final Map<Point,Chunk> edgeChunks;
     private Point playerLoc;
-    private int renderDistance;
+    private final int renderDistance;
     public CityMap() {
-        chunkSize =Chunk.getSize();
         chunks = new HashMap<>();
         edgeChunks=new HashMap<>();
         playerLoc=new Point(0,0);
-        renderDistance=90;
+        renderDistance=5;
     }
 
     public void setSquare(int x, int y, int value){
-        int locX= (int) Math.floor(x/(chunkSize +0.0));
-        int locY= (int) Math.floor(y/(chunkSize +0.0));
+        int locX= (int) Math.floor(x/(getChunkSize() +0.0));
+        int locY= (int) Math.floor(y/(getChunkSize() +0.0));
         getChunk(locX,locY);
-        chunks.get(locX+","+locY).set(Math.floorMod(x, chunkSize),Math.floorMod(y, chunkSize),value);
+        chunks.get(new Point(locX,locY)).set(Math.floorMod(x, getChunkSize()),Math.floorMod(y, getChunkSize()),value);
     }
     public int getSquare(int x, int y){
         int locX= chunkLoc(x);
         int locY= chunkLoc(y);
-        getChunk(locX,locY);
-        return chunks.get(locX+","+locY).get(Math.floorMod(x, chunkSize),Math.floorMod(y, chunkSize));
+        if (Point.distance(x,y, playerLoc.x, playerLoc.y)<10) return 4;
+        return getChunk(locX,locY).get(Math.floorMod(x, getChunkSize()),Math.floorMod(y, getChunkSize()));
     }
 
     private Chunk getChunk(int locX, int locY) {
-        if(!chunks.containsKey(locX+","+locY))
-            chunks.put(locX+","+locY,new Chunk(locX,locY));
-        return chunks.get(locX+","+locY);
+        Point p=new Point(locX,locY);
+        if(!chunks.containsKey(p))
+            chunks.put(p,new Chunk(locX,locY));
+        return chunks.get(p);
     }
 
     /**
      * returns the chunk object that the point p is in.
      */
     public Chunk getPointChunk(Point p){
-        return getChunk((int) Math.floor(p.x/(chunkSize +0.0)),(int) Math.floor(p.y/(chunkSize +0.0)));
+        return getChunk((int) Math.floor(p.x/(getChunkSize() +0.0)),(int) Math.floor(p.y/(getChunkSize() +0.0)));
     }
 
 
@@ -58,7 +60,7 @@ public class CityMap {
         return Math.sqrt(dx*dx + dy*dy)<=renderDistance;
     }
     public int chunkLoc(int v){
-        return (int) Math.floor(v/(chunkSize +0.0));
+        return (int) Math.floor(v/(getChunkSize() +0.0));
     }
     
     public Point chunkLoc(Point p){
@@ -79,9 +81,8 @@ public class CityMap {
     public Set<Point> playerRadiusChunkLocs(){
     	Set<Point> points=new HashSet<>();
     	double edgeLength=2*Math.PI*renderDistance;
-    	double segmentSize=360/(edgeLength/(chunkSize/4));
-    	System.out.println(segmentSize);
-        for (int angle = 0; angle < 360; angle+=segmentSize) {
+    	double segmentSize=360/edgeLength;
+        for (double angle = 0; angle < 360; angle+=segmentSize) {
 	         double radian = Math.toRadians(angle);
 	         int x = chunkLoc(playerLoc.x)+ (int) (renderDistance  * Math.cos(radian));
 	         int y = chunkLoc(playerLoc.y) + (int) (renderDistance * Math.sin(radian));
@@ -89,9 +90,4 @@ public class CityMap {
         }
     	return points;
     }
-    public int getChunkSize() {
-    	return chunkSize;
-    }
-
-    
 }

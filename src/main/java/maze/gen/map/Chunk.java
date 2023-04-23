@@ -6,16 +6,24 @@ import java.awt.Point;
 import java.util.*;
 
 public class Chunk {
-    private static final int size=16;
+    private static int size;
     private final int[][] map;
-    private Map<Integer,Deque<Road>> conPointsMap;
+    private final Map<Integer,Deque<Road>> conPointsMap;
     private final Point loc;
+    private boolean generated = false;
+    public static void setSize(int size){
+        Chunk.size =size;
+    }
+    public boolean isGenerated(){
+        return generated;
+    }
     public Chunk(int locX,int locY){
         map=new int[size][size];
         loc=new Point(locX,locY);
         conPointsMap=new HashMap<>();
     }
-    public static int getSize() {
+    public static int getChunkSize() {
+//        System.out.println(size);
         return size;
     }
     public void set(int x,int y,int value){

@@ -13,8 +13,7 @@ public class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(pixelSizeX + 17, pixelSizeY + 40);
         frame.setVisible(true);
-        Window window=new Window(pixelSizeX,pixelSizeY, 1234567);
-        System.out.println("sh");
+        Window window=new Window();
         MouseListener ml = new MouseListener() {
             int x=0,y=0;
             @Override
@@ -47,8 +46,10 @@ public class Main {
                 if (e.getKeyChar()=='s') window.movePlayer(0,+10);
                 if (e.getKeyChar()=='d') window.movePlayer(+10,0);
                 if (e.getKeyChar()=='a') window.movePlayer(-10,0);
-                if (e.getKeyChar()=='q') window.decProb();
-                if (e.getKeyChar()=='e') window.incProb();
+                if (e.getKeyChar()=='q') window.decStraightProb();
+                if (e.getKeyChar()=='e') window.incStraightProb();
+                if (e.getKeyChar()=='r') window.decCurveProb();
+                if (e.getKeyChar()=='y') window.incCurveProb();
             }
             public void keyPressed(KeyEvent e) {}
             public void keyReleased(KeyEvent e) {}
