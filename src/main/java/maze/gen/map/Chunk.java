@@ -17,16 +17,22 @@ public class Chunk {
     public boolean isGenerated(){
         return generated;
     }
+    public void setGenerated(boolean generated){
+        this.generated=generated;
+    }
     public Chunk(int locX,int locY){
         map=new int[size][size];
         loc=new Point(locX,locY);
         conPointsMap=new HashMap<>();
     }
     public static int getChunkSize() {
-//        System.out.println(size);
         return size;
     }
     public void set(int x,int y,int value){
+        if(generated) {
+            System.out.println(loc + " is already generated my guy !");
+            return;
+        }
         map[x][y]=value;
     }
     public int get(int x,int y){

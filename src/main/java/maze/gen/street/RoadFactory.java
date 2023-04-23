@@ -74,7 +74,7 @@ public class RoadFactory {
         return true;
     }
     
-    private Point getNextPoint(Point start,Direction direction){
+    public Point getNextPoint(Point start,Direction direction){
         return new Point(start.x + direction.getVector()[0]*roadLength, start.y + direction.getVector()[1]*roadLength);
     }
 }

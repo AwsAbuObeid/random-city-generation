@@ -2,10 +2,9 @@ package maze.gen.map;
 
 
 import java.awt.Point;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static maze.gen.map.Chunk.getChunkSize;
 
@@ -18,7 +17,7 @@ public class CityMap {
         chunks = new HashMap<>();
         edgeChunks=new HashMap<>();
         playerLoc=new Point(0,0);
-        renderDistance=5;
+        renderDistance=10;
     }
 
     public void setSquare(int x, int y, int value){
@@ -89,5 +88,27 @@ public class CityMap {
 	         points.add(new Point(x,y));
         }
     	return points;
+    }
+    public Set<Chunk> getSpawnChunks(){
+        double renderDistance=this.renderDistance;
+
+        Set<Chunk> points=new HashSet<>();
+        while(renderDistance>0) {
+            double edgeLength = 2 * Math.PI * renderDistance;
+            double segmentSize = Math.round(360 / edgeLength);
+            for (double angle = 0; angle < 360; angle += segmentSize) {
+                double radian = Math.toRadians(angle);
+                int x = chunkLoc(playerLoc.x) + (int) (renderDistance * Math.cos(radian));
+                int y = chunkLoc(playerLoc.y) + (int) (renderDistance * Math.sin(radian));
+
+                points.add(getChunk(x, y));
+            }
+            //renderDistance-=segmentSize;
+            //renderDistance--;
+            renderDistance-=0.25;
+        }
+
+        return points;
+
     }
 }

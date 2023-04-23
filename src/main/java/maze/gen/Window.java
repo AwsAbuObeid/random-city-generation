@@ -7,6 +7,8 @@ import maze.gen.street.MapValue;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Deque;
+import java.util.Set;
 
 import static maze.gen.map.Chunk.getChunkSize;
 
@@ -17,6 +19,7 @@ public class Window extends JPanel {
     private final Point center;
     private int seed;
     private int chunkSize;
+    private Set<Chunk> test;
     public Window( ) {
         blockSize=1;
         this.showGridLines=false;
@@ -24,6 +27,7 @@ public class Window extends JPanel {
         center=new Point(0,0);
         gen.generateGrid(123456);
         chunkSize= getChunkSize();
+        //test=gen.getMap().getSpawnChunks();
     }
     public void zoomIn(){
         blockSize++;
@@ -115,6 +119,7 @@ public class Window extends JPanel {
         System.out.println("straightRoadProb :" + gen.straightRoadProb);
     }
     private int map(int x,int y){
+        //if(test.contains(gen.getMap().getPointChunk(new Point(x, y)))) return 4;
         return gen.getMap().getSquare(x,y);
     }
 

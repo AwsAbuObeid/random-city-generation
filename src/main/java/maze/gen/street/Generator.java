@@ -9,7 +9,6 @@ import java.util.*;
 import static maze.gen.street.Direction.*;
 
 public class Generator {
-    private Map<Integer,Deque<Road>> conRoadsMap;
 
     private Deque<Chunk> generationQueue;
     private Map<Integer, RoadFactory> factories;
@@ -29,7 +28,6 @@ public class Generator {
         this.seed=seed;
         factories=new HashMap<>();
         cityMap=new CityMap();
-        conRoadsMap =new HashMap<>();
         generationQueue=new ArrayDeque<>();
         roadWidths=new int[levels];
         long startTime = System.currentTimeMillis(); // Record the start time
@@ -40,14 +38,20 @@ public class Generator {
             roadWidths[i]=width;
             if(i==levels-1){
                 Chunk.setSize(length);
-                getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),RIGHT));
-                getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),LEFT));
-                getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),UP));
-                getConRoads(width).push(factories.get(width).genRoad(new Point(0,0),DOWN));
+                //Chunk.setSize(16);
+                Road newRoad=factories.get(width).genRoad(new Point(0,0),RIGHT);
+                cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
+                newRoad=factories.get(width).genRoad(new Point(0,0),LEFT);
+                cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
+                newRoad=factories.get(width).genRoad(new Point(0,0),UP);
+                cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
+                newRoad=factories.get(width).genRoad(new Point(0,0),DOWN);
+                cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
+
             }
         }
-        for(int i=levels-1;i>=0;i--)
-            fractalRoads((int)(smallestRoadWidth*(Math.pow(roadWidthMultiplier,i))),straightRoadProb);
+        generationQueue.addAll(cityMap.getSpawnChunks());
+        fractalRoads();
         System.out.println("generation took " + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds to run.");
 
     }
@@ -55,33 +59,38 @@ public class Generator {
         return cityMap;
     }
 
-    private void fractalRoads(int roadWidth,double straightRoadProb) {
-        while (!getConRoads(roadWidth).isEmpty()) {
-            Road r = getConRoads(roadWidth).pop();
-            String newSeed = seed + " " + r.getEnd().x + " " + r.getEnd().y;
-            Random random = new Random(new Random(newSeed.hashCode()).nextInt());
-            Direction[] openDirs = factories.get(roadWidth).getOpenDirections(r);
-            Collections.shuffle(Arrays.asList(openDirs), random);
-            boolean connected = openDirs.length != 3;
-            for ( int i=0;i<openDirs.length;i++) {
-                double prob = straightRoadProb;
-                if (r.getDir() != openDirs[i]) prob = curvedRoadProb;
-                if (random.nextDouble() < prob || (i==openDirs.length-1 && !connected)) {
-                    Direction dir=openDirs[i];
-                    if((i==openDirs.length-1 && !connected)&& Arrays.asList(openDirs).contains(r.getDir()))
-                        dir=r.getDir();
-                    if (!connected) connected = true;
+    private void fractalRoads() {
+        while (!generationQueue.isEmpty()) {
+            System.out.println(generationQueue.size());
+            Chunk chunk = generationQueue.pop();
+            for (int roadWidth : roadWidths)
+                while(!chunk.getConPoints(roadWidth).isEmpty()) {
+                Road r = chunk.getConPoints(roadWidth).pop();
+                String newSeed = seed + " " + r.getEnd().x + " " + r.getEnd().y;
+                Random random = new Random(new Random(newSeed.hashCode()).nextInt());
+                Direction[] openDirs = factories.get(roadWidth).getOpenDirections(r);
+                Collections.shuffle(Arrays.asList(openDirs), random);
+                boolean connected = openDirs.length != 3;
+                for (int i = 0; i < openDirs.length; i++) {
+                    double prob = straightRoadProb;
+                    if (r.getDir() != openDirs[i]) prob = curvedRoadProb;
+                    if (random.nextDouble() < prob || (i == openDirs.length - 1 && !connected)) {
+                        Direction dir = openDirs[i];
+                        if ((i == openDirs.length - 1 && !connected) /*&& Arrays.asList(openDirs).contains(r.getDir())*/)
+                            dir = r.getDir();
+                        if (!connected) connected = true;
+                        //if (cityMap.getPointChunk(factories.get(roadWidth).getNextPoint(r.getEnd(),dir)).equals(chunk))
+                        Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
+                        Direction[] directions = factories.get(roadWidth).getOpenDirections(newRoad);
+                        createSmallerRoads(newRoad.getEnd(), directions, roadWidth / roadWidthMultiplier, random);
 
-                    Road newRoad = factories.get(roadWidth).genRoad(r.getEnd(), dir);
-                    Direction[] directions =  factories.get(roadWidth).getOpenDirections(newRoad);
-                    createSmallerRoads(newRoad.getEnd(),directions, roadWidth /roadWidthMultiplier, random);
-                    //don't go through roads
-                    //if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1)
-                    //if (factories.get(roadWidth).getOpenDirections(newRoad).length != 1 || factories.get(roadWidth).getOpenDirections(newRoad)[0] != newRoad.getDir())
-                        storeRoad(newRoad);
+                        cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
 
+                    }
                 }
             }
+            // chunk.setGenerated(true);
+
         }
     }
     private void createSmallerRoads(Point p,Direction[] directions,int roadWidth,Random random){
@@ -90,25 +99,12 @@ public class Generator {
             double prob = 1.0 - smallerStreetScaleFactor * roadWidth;
             if(random.nextDouble()<prob) {
                 Road road = factories.get(roadWidth).genRoad(p, dir);
-                storeRoad(road);
+                cityMap.getPointChunk(road.getEnd()).addRoad(road);
             }
         }
 
     }
-    private void storeRoad(Road newRoad){
-    	Point roadEnd =newRoad.getEnd();
-        if (!cityMap.isPointLoaded(roadEnd)) {
-            cityMap.getEdgeChunks().put(cityMap.chunkLoc(roadEnd),cityMap.getPointChunk(roadEnd));
-            cityMap.getPointChunk(newRoad.getEnd()).addRoad(newRoad);
-        } else
-            getConRoads(newRoad.getWidth()).push(newRoad);
-    }
 
-    private Deque<Road> getConRoads(int roadWidth){
-        if(!conRoadsMap.containsKey(roadWidth))
-            conRoadsMap.put(roadWidth,new ArrayDeque<>());
-        return conRoadsMap.get(roadWidth);
-    }
 
     public void movePlayer(int movementX, int movementY) {
         Point loc=cityMap.getPlayerLoc();
@@ -122,11 +118,10 @@ public class Generator {
         	if(!cityMap.isChunkLoaded(chunkLoc)) continue;
         	Chunk chunk=cityMap.getEdgeChunks().get(chunkLoc);
         	if(chunk==null) continue;
-            for(int width:roadWidths)
-            	getConRoads(width).addAll(chunk.getConPoints(width));
+            for(int width:roadWidths) continue;
+            	//getConRoads(width).addAll(chunk.getConPoints(width));
         }
-        for(int width:roadWidths)
-            fractalRoads(width,straightRoadProb);
+        fractalRoads();
     }
     
 }
